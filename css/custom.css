@@ -1,0 +1,129 @@
+/* 鼠标样式 */
+#cursor {
+  position: fixed;
+  width: 16px;
+  height: 16px;
+  background: rgb(57, 197, 187);
+  border-radius: 8px;
+  opacity: 0.25;
+  z-index: 10086;
+  pointer-events: none;
+  transition: 0.2s ease-in-out;
+  transition-property: background, opacity, transform;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+#cursor.hidden { opacity: 0; }
+
+#cursor.hover {
+  opacity: 0.1;
+  transform: scale(2.5);
+  -webkit-transform: scale(2.5);
+  -moz-transform: scale(2.5);
+  -ms-transform: scale(2.5);
+  -o-transform: scale(2.5);
+}
+
+#cursor.active {
+  opacity: 0.5;
+  transform: scale(0.5);
+  -webkit-transform: scale(0.5);
+  -moz-transform: scale(0.5);
+  -ms-transform: scale(0.5);
+  -o-transform: scale(0.5);
+}
+
+/* 页脚与头图透明 */
+#footer,
+#page-header {
+  background: transparent !important;
+}
+
+#footer::before,
+#page-header::before {
+  background: transparent !important;
+}
+
+[data-theme="dark"] #footer::before,
+[data-theme="dark"] #page-header::before {
+  background: transparent !important;
+}
+
+/* 全局变量 */
+:root {
+  --trans-light: rgba(255, 255, 255, 0.88);
+  --trans-dark: rgba(25, 25, 25, 0.88);
+  --border-style: 1px solid rgb(169, 169, 169);
+  --backdrop-filter: blur(5px) saturate(150%);
+  --card-radius: 20px;
+}
+
+/* 卡片通用样式 */
+#recent-posts > .recent-post-item,
+#aside-content .card-widget,
+div#post,
+div#page,
+div#archive {
+  background: var(--trans-light);
+  backdrop-filter: var(--backdrop-filter);
+  border: var(--border-style);
+  border-radius: var(--card-radius);
+}
+
+/* 首页特殊样式 */
+#recent-posts > .recent-post-item {
+  background: url(/source/img/home_bg.webp) center/cover;
+  backdrop-filter: blur(2px);
+  border-radius: 8px;
+}
+
+/* 导航栏 */
+#page-header.nav-fixed #nav {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: var(--backdrop-filter);
+}
+
+[data-theme="dark"] #page-header.nav-fixed #nav {
+  background: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* 夜间模式 */
+[data-theme="dark"] #recent-posts > .recent-post-item,
+[data-theme="dark"] #aside-content .card-widget,
+[data-theme="dark"] div#post,
+[data-theme="dark"] div#archive,
+[data-theme="dark"] div#page {
+  background: var(--trans-dark);
+}
+
+/* 阅读模式 */
+.read-mode #aside-content .card-widget,
+.read-mode div#post {
+  background: rgba(158, 204, 171, 0.5) !important;
+}
+
+[data-theme="dark"] .read-mode #aside-content .card-widget,
+[data-theme="dark"] .read-mode div#post {
+  background: rgba(25, 25, 25, 0.9) !important;
+  color: #ffffff;
+}
+
+/* 帧率检测 */
+#fps {
+  position: fixed;
+  left: 10px;
+  bottom: 10px;
+  z-index: 1919810;
+  padding: 4px;
+  border-radius: 4px;
+  backdrop-filter: var(--backdrop-filter);
+}
+
+[data-theme="light"] #fps {
+  background-color: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme="dark"] #fps {
+  background-color: rgba(0, 0, 0, 0.72);
+}

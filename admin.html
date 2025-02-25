@@ -1,0 +1,236 @@
+
+
+<meta charset="utf-8">
+<style>
+.admin-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+}
+
+button {
+    background: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+}
+/* 新增样式 */
+.post-item {
+    transition: transform 0.2s;
+    background: rgba(255,255,255,0.9);
+}
+
+.post-item:hover {
+    transform: translateX(5px);
+}
+
+button {
+    transition: opacity 0.2s;
+}
+
+button:hover {
+    opacity: 0.8;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+#posts-container {
+    max-height: 500px;
+    overflow-y: auto;
+    margin-top: 1rem;
+}
+</style>
+
+<div class="admin-container">
+    <h1>文章管理</h1>
+    
+    <div class="form-group">
+        <label>文件名（不带后缀）</label>
+        <input type="text" id="filename" placeholder="例如：new-post">
+    </div>
+
+    <div class="form-group">
+        <label>文章标题</label>
+        <input type="text" id="title">
+    </div>
+
+    <div class="form-group">
+        <label>标签（逗号分隔）</label>
+        <input type="text" id="tags">
+    </div>
+
+    <div class="form-group">
+        <label>内容</label>
+        <textarea id="content" rows="10"></textarea>
+    </div>
+
+    <!-- 在表单顶部添加模式标识 -->
+    <h2 id="formTitle">发布新文章</h2>
+    <button id="submitBtn" onclick="submitPost()">发布文章</button>
+
+     <!-- 在发布按钮下方添加 -->
+    <div id="post-list" style="margin-top: 2rem;">
+        <h2>文章列表</h2>
+        <div id="posts-container"></div>
+    </div>
+</div>
+
+<script>
+// 优化后的提交函数
+async function submitPost() {
+    const oldFilename = document.getElementById('filename').dataset.oldName;
+    const isEdit = !!oldFilename;
+    
+    const payload = {
+        ...(isEdit && { oldFilename }), // 仅编辑时包含旧文件名
+        newFilename: document.getElementById('filename').value,
+        meta: {
+            title: document.getElementById('title').value,
+            tags: document.getElementById('tags').value.split(',').map(t => t.trim()),
+            date: new Date().toISOString().split('T')[0]
+        },
+        content: document.getElementById('content').value
+    };
+
+    try {
+        const url = isEdit ? 
+            `http://localhost:3000/hexo/posts/${oldFilename}` : 
+            'http://localhost:3000/hexo/posts';
+        
+        const response = await fetch(url, {
+            method: isEdit ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await response.json();
+        if(result.success) {
+            showToast(isEdit ? '更新成功！' : '发布成功', true);
+            clearForm();
+            loadPosts();
+        }
+    } catch (error) {
+        showToast('操作失败，请检查控制台', false);
+    }
+}
+
+// 显示操作提示
+function showToast(message, isSuccess) {
+    const toast = document.createElement('div');
+    toast.style = `position:fixed; top:20px; right:20px; padding:12px; 
+        background:${isSuccess ? '#28a745' : '#dc3545'}; color:white; border-radius:4px;`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.remove(), 3000);
+}
+
+// 清空表单
+function clearForm() {
+    delete document.getElementById('filename').dataset.oldName;
+    document.getElementById('formTitle').textContent = '发布新文章';
+    document.getElementById('submitBtn').textContent = '发布文章';
+    document.getElementById('filename').value = '';
+    document.getElementById('title').value = '';
+    document.getElementById('tags').value = '';
+    document.getElementById('content').value = '';
+}
+// 加载文章列表
+async function loadPosts() {
+    try {
+        const res = await fetch('http://localhost:3000/hexo/posts');
+        // 增加错误状态处理
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        const posts = await res.json();
+        renderPosts(posts);
+    } catch (error) {
+        console.error('加载失败:', error);
+        showToast('文章加载失败，请检查控制台', false);
+    }
+}
+// 渲染文章列表
+function renderPosts(posts) {
+    const container = document.getElementById('posts-container');
+    // 增加空状态提示
+    if (!posts || posts.length === 0) {
+        container.innerHTML = '<p style="color:#999">暂无文章</p>';
+        return;
+    }
+    container.innerHTML = posts.map(post => `
+        <div class="post-item" style="margin: 1rem 0; padding: 1rem; border: 1px solid #ddd; border-radius: 4px;">
+            <h3 style="margin:0">${post.meta.title}</h3>
+            <p style="color:#666; margin:4px 0">
+                <span>文件名：${post.filename}</span> | 
+                <span>日期：${post.meta.date}</span>
+            </p>
+            <div style="margin-top: 8px;">
+                <button 
+                    style="background: #28a745; margin-right: 8px;"
+                    onclick="editPost('${post.filename}')">
+                    编辑
+                </button>
+                <button 
+                    style="background: #dc3545;"
+                    onclick="deletePost('${post.filename}')">
+                    删除
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 初始化加载
+window.onload = function() {
+    loadPosts();
+}
+ // 编辑文章弹窗
+// 修改后的编辑函数
+    function editPost(filename) {
+        fetch(`http://localhost:3000/hexo/posts/${filename}`) 
+            .then(res => res.json())
+            .then(post => {
+                // 设置隐藏字段存储原始文件名
+                document.getElementById('filename').dataset.oldName = filename;
+                // 填充表单
+                document.getElementById('filename').value = filename.replace('.md','');
+                document.getElementById('title').value = post.meta.title;
+                document.getElementById('tags').value = post.meta.tags?.join(', ') || '';
+                document.getElementById('content').value = post.content;
+                
+                // 切换表单模式
+                document.getElementById('formTitle').textContent = '编辑文章';
+                document.getElementById('submitBtn').textContent = '更新文章';
+            });
+    }
+
+   // 修正admin.html中的deletePost函数
+    async function deletePost(filename) {
+        if(confirm(`确定删除 ${filename} 吗？`)) {
+            await fetch(`http://localhost:3000/hexo/posts/${filename}`, { // 添加完整地址
+                method: 'DELETE' 
+            });
+            loadPosts();
+        }
+    }
+</script>
